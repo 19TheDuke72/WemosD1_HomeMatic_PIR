@@ -67,7 +67,9 @@ void sendMotionDetectedToCCU() {
   if (WiFi.status() == WL_CONNECTED)
   {
     HTTPClient http;
-    String url = "http://" + String(ccuip) + ":8181/cuxd.exe?ret=dom.GetObject(%22CUxD." + Variable + "%22).State(true)";
+    String tempVar = String(Variable);
+    tempVar.replace(" ","%20");
+    String url = "http://" + String(ccuip) + ":8181/cuxd.exe?ret=dom.GetObject(%22CUxD." + tempVar + "%22).State(true)";
     printSerial("URL = " + url);
     http.begin(url);
     int httpCode = http.GET();
