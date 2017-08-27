@@ -4,8 +4,8 @@
 #include <FS.h>
 #include <ArduinoJson.h>
 
-#define TasterPin      D7 //Taster gegen GND, um den Konfigurationsmodus zu aktivieren
-#define PIRPin         D5 //Optional: D5 gegen GND, um serielle Ausgabe zu aktivieren (115200,8,N,1)
+#define TasterPin      D7
+#define PIRPin         D5
 
 #define IPSIZE  16
 #define VARIABLESIZE  100
@@ -24,7 +24,7 @@ char netmask[IPSIZE] = "0.0.0.0";
 char gw[IPSIZE]      = "0.0.0.0";
 boolean startWifiManager = false;
 
-volatile byte interruptDetected = false;
+volatile byte interruptDetected = 0;
 
 enum BackendTypes_e {
   BackendType_HomeMatic,
