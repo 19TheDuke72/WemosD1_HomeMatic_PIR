@@ -24,7 +24,7 @@ char netmask[IPSIZE] = "0.0.0.0";
 char gw[IPSIZE]      = "0.0.0.0";
 boolean startWifiManager = false;
 
-volatile bool interruptDetected = false;
+volatile byte interruptDetected = false;
 
 enum BackendTypes_e {
   BackendType_HomeMatic,
@@ -32,13 +32,13 @@ enum BackendTypes_e {
 };
 
 void handleInterrupt() {
-  interruptDetected = true;
+  interruptDetected = (digitalRead(PIRPin) == HIGH) ? 1 : 2;
 }
 
 void setup() {
   pinMode(TasterPin, INPUT_PULLUP);
   pinMode(PIRPin, INPUT);
-  attachInterrupt(digitalPinToInterrupt(PIRPin), handleInterrupt, RISING);
+  attachInterrupt(digitalPinToInterrupt(PIRPin), handleInterrupt, CHANGE);
   pinMode(LED_BUILTIN, OUTPUT);
 
   digitalWrite(LED_BUILTIN,  HIGH);
@@ -65,33 +65,37 @@ void setup() {
 
 void loop() {
   if (interruptDetected) {
-    interruptDetected = false;
     sendMotionDetectedToCCU();
+    interruptDetected = 0;
   }
 }
 
 void sendMotionDetectedToCCU() {
-  if (WiFi.status() == WL_CONNECTED)
-  {
-    HTTPClient http;
-    String tempVar = String(Variable);
-    tempVar.replace(" ", "%20");
-    String url = "";
-    if (BackendType == BackendType_HomeMatic)
-      url = "http://" + String(ccuip) + ":8181/cuxd.exe?ret=dom.GetObject(%22" + tempVar + "%22).State(true)";
-    if (BackendType == BackendType_ioBroker)
-      url = "http://" + String(ccuip) + ":8087/set/" + tempVar +"?value=true&wait=100&prettyPrint";
+  if (interruptDetected > 0) {
+    if (WiFi.status() == WL_CONNECTED)
+    {
+      String val = (interruptDetected == 1) ? "true" : "false";
 
-    printSerial("URL = " + url);
-    http.begin(url);
-    int httpCode = http.GET();
-    printSerial("httpcode = " + String(httpCode));
+      HTTPClient http;
+      String tempVar = String(Variable);
+      tempVar.replace(" ", "%20");
+      String url = "";
+      if (BackendType == BackendType_HomeMatic)
+        url = "http://" + String(ccuip) + ":8181/cuxd.exe?ret=dom.GetObject(%22" + tempVar + "%22).State(" + val + ")";
+      if (BackendType == BackendType_ioBroker)
+        url = "http://" + String(ccuip) + ":8087/set/" + tempVar + "?value=" + val + "&wait=100&prettyPrint";
 
-    if (httpCode != 200) {
-      printSerial("HTTP fail " + String(httpCode));
-    }
-    http.end();
-  } else ESP.restart();
+      printSerial("URL = " + url);
+      http.begin(url);
+      int httpCode = http.GET();
+      printSerial("httpcode = " + String(httpCode));
+
+      if (httpCode != 200) {
+        printSerial("HTTP fail " + String(httpCode));
+      }
+      http.end();
+    } else ESP.restart();
+  }
 }
 
 void printSerial(String text) {
@@ -131,8 +135,6 @@ bool doWifiConnect() {
   WiFiManagerParameter custom_ip("custom_ip", "IP-Adresse", "", IPSIZE);
   WiFiManagerParameter custom_netmask("custom_netmask", "Netzmaske", "", IPSIZE);
   WiFiManagerParameter custom_gw("custom_gw", "Gateway", "", IPSIZE);
-
-
 
   wifiManager.addParameter(&custom_backendtype);
   wifiManager.addParameter(&custom_ccuip);
@@ -207,7 +209,6 @@ bool doWifiConnect() {
     delay(100);
     ESP.restart();
   }
-
   return true;
 }
 
