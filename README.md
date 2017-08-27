@@ -50,3 +50,8 @@ Geschieht dies nicht nach ein paar Sekunden, ist im Browser die Seite http://192
 ## PIR Bewegungsmelder einstellen:
 Die Haltezeit und sowie die Empfindlichkeit können an den beiden Potentiometern eingestellt werden.
 Eine Beschreibung lässt sich schnell bei Google finden, bzw. im [Datenblatt](https://www.mpja.com/download/31227sc.pdf) nachlesen.
+
+# HINWEIS:
+Zur eigenen Sicherheit sollte das Netzteil-Modul noch eine "Sicherheitsbeschaltung" bekommen, da gerade beim Einbau in geschlossenen Gehäusen/Unterputz die entstehende Wärme nicht ideal abgeleitet werden kann.
+![Schutzschaltung](https://forum.mysensors.org/uploads/files/1451436409274-hlk-pm01-wiring.jpg)
+
