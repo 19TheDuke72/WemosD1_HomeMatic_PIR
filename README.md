@@ -6,7 +6,7 @@
 - 1 Taster (nicht dauerhaft, nur um bei erster Inbetriebnahme / Änderungen den Konfigurationsmodus zu starten)
 - Stromversorgung (z.B. 5V USB-Netzteil)
 
-![Anschlussplan](Images/wiring.png)
+![Anschlussplan](Images/wire.png)
 ## Flashen
 Wenn alles nach obigem Bild verdrahtet wurde, kann das Image `WemosD1_HomeMatic_PIR.ino.d1_mini.bin` auf den Wemos geflasht werden.
 
