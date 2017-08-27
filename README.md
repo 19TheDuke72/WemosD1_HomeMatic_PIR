@@ -46,3 +46,7 @@ Geschieht dies nicht nach ein paar Sekunden, ist im Browser die Seite http://192
 **IP der CCU2**: selbsterklärend
 
 **Name der Systemvariable**: Systemvariable, die in der CCU angelegt wurde
+
+## PIR Bewegungsmelder einstellen:
+Die Haltezeit und sowie die Empfindlichkeit können an den beiden Potentiometern eingestellt werden.
+Eine Beschreibung lässt sich schnell bei Google finden, bzw. im [Datenblatt](https://www.mpja.com/download/31227sc.pdf) nachlesen.
