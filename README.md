@@ -21,7 +21,10 @@ Wenn alles nach obigem Bild verdrahtet wurde, kann das Image `WemosD1_HomeMatic_
   `esptool.exe -vv -cd nodemcu -cb 921600 -cp COM5 -ca 0x00000 -cf WemosD1_HomeMatic_PIR.ino.d1_mini.bin`
 
 ## Voraussetzungen: 
-- eine Systemvariable vom Typ "Logikwert". Bei der Benennung möglichst auf Umlaute verzichten!
+HomeMatic:
+  - eine Systemvariable vom Typ "Logikwert". Bei der Benennung möglichst auf Umlaute und Leerzeichen verzichten!
+ioBroker:
+  - ein Datenpunkt vom Typ "Logikwert" (manuell im Tab "Objekte" anlegen)
 
 ## Konfiguration des Wemos D1
 Um den Konfigurationsmodus zu starten, muss der Wemos D1 mit gedrückt gehaltenem Taster gestartet werden.
@@ -43,10 +46,19 @@ Geschieht dies nicht nach ein paar Sekunden, ist im Browser die Seite http://192
 
 **WLAN-Key**: WLAN Passwort
 
-**IP der CCU2**: selbsterklärend
+**Backend**: selbsterklärend
 
-**Name der Systemvariable**: Systemvariable, die in der CCU angelegt wurde
+**CCU2 / ioBroker IP**: selbsterklärend
 
+**Systemvariable / ObjektID**: 
+
+HomeMatic:
+  - Name der Systemvariable, die in der CCU angelegt wurde
+  
+ioBroker:
+  - ObjektID (vollständiger Pfad! bspw. admin.0.pir, wenn eine Variable namens pir unter admin.0 angelegt wurde)
+  
+  
 ## PIR Bewegungsmelder einstellen:
 Die Haltezeit und sowie die Empfindlichkeit können an den beiden Potentiometern eingestellt werden.
 Eine Beschreibung lässt sich schnell bei Google finden, bzw. im [Datenblatt](https://www.mpja.com/download/31227sc.pdf) nachlesen.
