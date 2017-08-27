@@ -12,6 +12,8 @@
 char ccuip[IPSIZE];
 char Variable[VARIABLESIZE];
 
+byte BackendType = 0;
+
 //WifiManager - don't touch
 byte ConfigPortalTimeout = 180;
 bool shouldSaveConfig        = false;
@@ -23,6 +25,11 @@ char gw[IPSIZE]      = "0.0.0.0";
 boolean startWifiManager = false;
 
 volatile bool interruptDetected = false;
+
+enum BackendTypes_e {
+  BackendType_HomeMatic,
+  BackendType_ioBroker
+};
 
 void handleInterrupt() {
   interruptDetected = true;
@@ -68,8 +75,13 @@ void sendMotionDetectedToCCU() {
   {
     HTTPClient http;
     String tempVar = String(Variable);
-    tempVar.replace(" ","%20");
-    String url = "http://" + String(ccuip) + ":8181/cuxd.exe?ret=dom.GetObject(%22" + tempVar + "%22).State(true)";
+    tempVar.replace(" ", "%20");
+    String url = "";
+    if (BackendType == BackendType_HomeMatic)
+      url = "http://" + String(ccuip) + ":8181/cuxd.exe?ret=dom.GetObject(%22" + tempVar + "%22).State(true)";
+    if (BackendType == BackendType_ioBroker)
+      url = "http://" + String(ccuip) + ":8087/set/" + tempVar +"?value=true&wait=100&prettyPrint";
+
     printSerial("URL = " + url);
     http.begin(url);
     int httpCode = http.GET();
@@ -98,14 +110,31 @@ bool doWifiConnect() {
   wifiManager.setDebugOutput(wifiManagerDebugOutput);
   wifiManager.setAPCallback(configModeCallback);
   wifiManager.setSaveConfigCallback(saveConfigCallback);
-  WiFiManagerParameter custom_ccuip("ccu", "IP der CCU2", ccuip, IPSIZE);
+  WiFiManagerParameter custom_ccuip("central", "CCU2 / ioBroker IP", ccuip, IPSIZE);
 
-  WiFiManagerParameter custom_variablename("variable", "Name der Systemvariable", Variable, VARIABLESIZE);
+  WiFiManagerParameter custom_variablename("variable", "Systemvariable / ObjektID", Variable, VARIABLESIZE);
+
+  String options = "";
+  switch (BackendType) {
+    case BackendType_HomeMatic:
+      options = F("<option selected value='0'>HomeMatic</option><option value='1'>ioBroker</option>");
+      break;
+    case BackendType_ioBroker:
+      options = F("<option value='0'>HomeMatic</option><option selected value='1'>ioBroker</option>");
+      break;
+    default:
+      options = F("<option value='0'>HomeMatic</option><option value='1'>ioBroker</option>");
+      break;
+  }
+  WiFiManagerParameter custom_backendtype("backendtype", "Backend", "", 8, 2, options.c_str());
 
   WiFiManagerParameter custom_ip("custom_ip", "IP-Adresse", "", IPSIZE);
   WiFiManagerParameter custom_netmask("custom_netmask", "Netzmaske", "", IPSIZE);
   WiFiManagerParameter custom_gw("custom_gw", "Gateway", "", IPSIZE);
 
+
+
+  wifiManager.addParameter(&custom_backendtype);
   wifiManager.addParameter(&custom_ccuip);
   wifiManager.addParameter(&custom_variablename);
   WiFiManagerParameter custom_text("<br/><br>Statische IP (wenn leer, dann DHCP):");
@@ -155,11 +184,13 @@ bool doWifiConnect() {
     }
     strcpy(ccuip, custom_ccuip.getValue());
     strcpy(Variable, custom_variablename.getValue());
+    BackendType = (atoi(custom_backendtype.getValue()));
     json["ip"] = ip;
     json["netmask"] = netmask;
     json["gw"] = gw;
     json["ccuip"] = ccuip;
     json["variable"] = Variable;
+    json["backendtype"] = BackendType;
 
     SPIFFS.remove("/" + configJsonFile);
     File configFile = SPIFFS.open("/" + configJsonFile, "w");
@@ -224,7 +255,7 @@ bool loadSystemConfig() {
           ((json["gw"]).as<String>()).toCharArray(gw, IPSIZE);
           ((json["ccuip"]).as<String>()).toCharArray(ccuip, IPSIZE);
           ((json["variable"]).as<String>()).toCharArray(Variable, VARIABLESIZE);
-
+          BackendType = json["backendtype"];
         } else {
           printSerial("failed to load json config");
         }
