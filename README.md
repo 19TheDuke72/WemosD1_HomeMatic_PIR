@@ -23,6 +23,7 @@ Wenn alles nach obigem Bild verdrahtet wurde, kann das Image `WemosD1_HomeMatic_
 ## Voraussetzungen: 
 HomeMatic:
   - eine Systemvariable vom Typ "Logikwert". Bei der Benennung möglichst auf Umlaute und Leerzeichen verzichten!
+  
 ioBroker:
   - ein Datenpunkt vom Typ "Logikwert" (manuell im Tab "Objekte" anlegen)
 
