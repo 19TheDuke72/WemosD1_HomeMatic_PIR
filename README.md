@@ -1,5 +1,8 @@
 # Wemos D1 als PIR-Bewegungsmelder  
 
+## Funktionsweise:
+Wird eine Bewegung erkannt, wird eine Logikvariable der CCU bzw. in ioBroker für die Dauer der Haltezeit (einstellbar am Poti des HC-SR501 PIR Bewegungsmelders) auf "wahr" gesetzt und anschließend wieder auf "falsch".
+
 ## Folgende Bauteile werden benötigt:
 - Wemos D1 Mini
 - 1 HC-SR501 PIR Bewegungsmelder
