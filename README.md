@@ -3,9 +3,19 @@
 ## Funktionsweise:
 Wird eine Bewegung erkannt, wird eine Logikvariable der CCU bzw. in ioBroker für die Dauer der Haltezeit (einstellbar am Poti des HC-SR501 PIR Bewegungsmelders) auf "wahr" gesetzt und anschließend wieder auf "falsch".
 
+Es lassen sich bis zu 4 PIR-Module anschließen! 
+
+_Desweiteren lassen sich die Pins auch als digitale Eingänge nutzen._
+
+Modul
+  - 1 an D5
+  - 2 an D6
+  - 3 an D1
+  - 4 an D2
+
 ## Folgende Bauteile werden benötigt:
 - Wemos D1 Mini
-- 1 HC-SR501 PIR Bewegungsmelder
+- 1..4 HC-SR501 PIR Bewegungsmelder
 - 1 Taster (nicht dauerhaft, nur um bei erster Inbetriebnahme / Änderungen den Konfigurationsmodus zu starten)
 - Stromversorgung (z.B. 5V USB-Netzteil)
 
@@ -54,13 +64,15 @@ Geschieht dies nicht nach ein paar Sekunden, ist im Browser die Seite http://192
 
 **CCU2 / ioBroker IP**: selbsterklärend
 
-**Systemvariable / ObjektID**: 
+**n. Systemvariable / ObjektID (Dx)**: 
 
 HomeMatic:
   - Name der Systemvariable, die in der CCU angelegt wurde
   
 ioBroker:
   - ObjektID (vollständiger Pfad! bspw. admin.0.pir, wenn eine Variable namens pir unter admin.0 angelegt wurde)
+  
+Die Eingabefelder, an denen kein PIR-Modul angeschlossen ist, sind leer zu lassen.
   
   
 ## PIR Bewegungsmelder einstellen:
