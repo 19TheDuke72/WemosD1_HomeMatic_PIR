@@ -4,13 +4,19 @@
 #include <FS.h>
 #include <ArduinoJson.h>
 
-#define TasterPin      D7
-#define PIRPin         D5
+#define TasterPin         D7
+#define InputPin1         D5
+#define InputPin2         D6
+#define InputPin3         D1
+#define InputPin4         D2
 
 #define IPSIZE  16
 #define VARIABLESIZE  100
 char ccuip[IPSIZE];
-char Variable[VARIABLESIZE];
+char Variable1[VARIABLESIZE];
+char Variable2[VARIABLESIZE];
+char Variable3[VARIABLESIZE];
+char Variable4[VARIABLESIZE];
 
 byte BackendType = 0;
 
@@ -24,27 +30,44 @@ char netmask[IPSIZE] = "0.0.0.0";
 char gw[IPSIZE]      = "0.0.0.0";
 boolean startWifiManager = false;
 
-volatile byte interruptDetected = 0;
-
 enum BackendTypes_e {
   BackendType_HomeMatic,
   BackendType_ioBroker
 };
 
-void handleInterrupt() {
-  interruptDetected = (digitalRead(PIRPin) == HIGH) ? 1 : 2;
-}
+volatile byte interrupt1Detected = 0;
+volatile byte interrupt2Detected = 0;
+volatile byte interrupt3Detected = 0;
+volatile byte interrupt4Detected = 0;
 
+void handleInterrupt1() {
+  interrupt1Detected = (digitalRead(InputPin1) == HIGH) ? 1 : 2;
+}
+void handleInterrupt2() {
+  interrupt2Detected = (digitalRead(InputPin2) == HIGH) ? 1 : 2;
+}
+void handleInterrupt3() {
+  interrupt3Detected = (digitalRead(InputPin3) == HIGH) ? 1 : 2;
+}
+void handleInterrupt4() {
+  interrupt4Detected = (digitalRead(InputPin4) == HIGH) ? 1 : 2;
+}
 void setup() {
   pinMode(TasterPin, INPUT_PULLUP);
-  pinMode(PIRPin, INPUT);
-  attachInterrupt(digitalPinToInterrupt(PIRPin), handleInterrupt, CHANGE);
+  pinMode(InputPin1, INPUT);
+  pinMode(InputPin2, INPUT);
+  pinMode(InputPin3, INPUT);
+  pinMode(InputPin4, INPUT);
+  attachInterrupt(digitalPinToInterrupt(InputPin1), handleInterrupt1, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(InputPin2), handleInterrupt2, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(InputPin3), handleInterrupt3, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(InputPin4), handleInterrupt4, CHANGE);
   pinMode(LED_BUILTIN, OUTPUT);
 
   digitalWrite(LED_BUILTIN,  HIGH);
   wifiManagerDebugOutput = true;
   Serial.begin(115200);
-  printSerial("Programmstart...");
+  Serial.println("Programmstart...");
 
   if (digitalRead(TasterPin) == LOW) {
     Serial.println("Taster gedrückt - Config Mode wird gestartet!");
@@ -59,25 +82,35 @@ void setup() {
   loadSystemConfig();
 
   if (doWifiConnect()) {
-    printSerial("WLAN erfolgreich verbunden!");
+    Serial.println("WLAN erfolgreich verbunden!");
   } else ESP.restart();
 }
 
 void loop() {
-  if (interruptDetected) {
-    sendMotionDetectedToCCU();
-    interruptDetected = 0;
+  if (interrupt1Detected) {
+    sendMotionDetectedToCCU(interrupt1Detected, Variable1);
+    interrupt1Detected = 0;
+  }
+  if (interrupt2Detected) {
+    sendMotionDetectedToCCU(interrupt2Detected, Variable2);
+    interrupt2Detected = 0;
+  }
+  if (interrupt3Detected) {
+    sendMotionDetectedToCCU(interrupt3Detected, Variable3);
+    interrupt3Detected = 0;
+  }
+  if (interrupt4Detected) {
+    sendMotionDetectedToCCU(interrupt4Detected, Variable4);
+    interrupt4Detected = 0;
   }
 }
 
-void sendMotionDetectedToCCU() {
-  if (interruptDetected > 0) {
-    if (WiFi.status() == WL_CONNECTED)
-    {
-      String val = (interruptDetected == 1) ? "true" : "false";
-
+void sendMotionDetectedToCCU(byte interruptValue, char *Variable) {
+  String tempVar = Variable;
+  if (interruptValue > 0 && tempVar != "") {
+    if (WiFi.status() == WL_CONNECTED) {
+      String val = (interruptValue == 1) ? "true" : "false";
       HTTPClient http;
-      String tempVar = String(Variable);
       tempVar.replace(" ", "%20");
       String url = "";
       if (BackendType == BackendType_HomeMatic)
@@ -85,21 +118,17 @@ void sendMotionDetectedToCCU() {
       if (BackendType == BackendType_ioBroker)
         url = "http://" + String(ccuip) + ":8087/set/" + tempVar + "?value=" + val + "&wait=100&prettyPrint";
 
-      printSerial("URL = " + url);
+      Serial.println("URL = " + url);
       http.begin(url);
       int httpCode = http.GET();
-      printSerial("httpcode = " + String(httpCode));
+      Serial.println("httpcode = " + String(httpCode));
 
       if (httpCode != 200) {
-        printSerial("HTTP fail " + String(httpCode));
+        Serial.println("HTTP fail " + String(httpCode));
       }
       http.end();
     } else ESP.restart();
   }
-}
-
-void printSerial(String text) {
-  Serial.println(text);
 }
 
 bool doWifiConnect() {
@@ -116,7 +145,10 @@ bool doWifiConnect() {
   wifiManager.setSaveConfigCallback(saveConfigCallback);
   WiFiManagerParameter custom_ccuip("central", "CCU2 / ioBroker IP", ccuip, IPSIZE);
 
-  WiFiManagerParameter custom_variablename("variable", "Systemvariable / ObjektID", Variable, VARIABLESIZE);
+  WiFiManagerParameter custom_variable1name("variable1", "1. Systemvariable / ObjektID (D5)", Variable1, VARIABLESIZE);
+  WiFiManagerParameter custom_variable2name("variable2", "2. Systemvariable / ObjektID (D6)", Variable2, VARIABLESIZE);
+  WiFiManagerParameter custom_variable3name("variable3", "3. Systemvariable / ObjektID (D1)", Variable3, VARIABLESIZE);
+  WiFiManagerParameter custom_variable4name("variable4", "4. Systemvariable / ObjektID (D2)", Variable4, VARIABLESIZE);
 
   String options = "";
   switch (BackendType) {
@@ -138,7 +170,10 @@ bool doWifiConnect() {
 
   wifiManager.addParameter(&custom_backendtype);
   wifiManager.addParameter(&custom_ccuip);
-  wifiManager.addParameter(&custom_variablename);
+  wifiManager.addParameter(&custom_variable1name);
+  wifiManager.addParameter(&custom_variable2name);
+  wifiManager.addParameter(&custom_variable3name);
+  wifiManager.addParameter(&custom_variable4name);
   WiFiManagerParameter custom_text("<br/><br>Statische IP (wenn leer, dann DHCP):");
   wifiManager.addParameter(&custom_text);
   wifiManager.addParameter(&custom_ip);
@@ -156,7 +191,7 @@ bool doWifiConnect() {
     }
     else {
       if (!wifiManager.startConfigPortal(Hostname.c_str())) {
-        printSerial("failed to connect and hit timeout");
+        Serial.println("failed to connect and hit timeout");
         delay(1000);
         ESP.restart();
       }
@@ -167,15 +202,15 @@ bool doWifiConnect() {
 
   wifiManager.autoConnect(Hostname.c_str());
 
-  printSerial("Wifi Connected");
-  printSerial("CUSTOM STATIC IP: " + String(ip) + " Netmask: " + String(netmask) + " GW: " + String(gw));
+  Serial.println("Wifi Connected");
+  Serial.println("CUSTOM STATIC IP: " + String(ip) + " Netmask: " + String(netmask) + " GW: " + String(gw));
   if (shouldSaveConfig) {
     SPIFFS.begin();
-    printSerial("saving config");
+    Serial.println("saving config");
     DynamicJsonBuffer jsonBuffer;
     JsonObject& json = jsonBuffer.createObject();
     if (String(custom_ip.getValue()).length() > 5) {
-      printSerial("Custom IP Address is set!");
+      Serial.println("Custom IP Address is set!");
       strcpy(ip, custom_ip.getValue());
       strcpy(netmask, custom_netmask.getValue());
       strcpy(gw, custom_gw.getValue());
@@ -185,19 +220,25 @@ bool doWifiConnect() {
       strcpy(gw,      "0.0.0.0");
     }
     strcpy(ccuip, custom_ccuip.getValue());
-    strcpy(Variable, custom_variablename.getValue());
+    strcpy(Variable1, custom_variable1name.getValue());
+    strcpy(Variable2, custom_variable2name.getValue());
+    strcpy(Variable3, custom_variable3name.getValue());
+    strcpy(Variable4, custom_variable4name.getValue());
     BackendType = (atoi(custom_backendtype.getValue()));
     json["ip"] = ip;
     json["netmask"] = netmask;
     json["gw"] = gw;
     json["ccuip"] = ccuip;
-    json["variable"] = Variable;
+    json["variable1"] = Variable1;
+    json["variable2"] = Variable2;
+    json["variable3"] = Variable3;
+    json["variable4"] = Variable4;
     json["backendtype"] = BackendType;
 
     SPIFFS.remove("/" + configJsonFile);
     File configFile = SPIFFS.open("/" + configJsonFile, "w");
     if (!configFile) {
-      printSerial("failed to open config file for writing");
+      Serial.println("failed to open config file for writing");
     }
 
     json.printTo(Serial);
@@ -214,11 +255,11 @@ bool doWifiConnect() {
 
 
 void configModeCallback (WiFiManager *myWiFiManager) {
-  printSerial("AP-Modus ist aktiv!");
+  Serial.println("AP-Modus ist aktiv!");
 }
 
 void saveConfigCallback () {
-  printSerial("Should save config");
+  Serial.println("Should save config");
   shouldSaveConfig = true;
 }
 
@@ -234,14 +275,14 @@ void parseBytes(const char* str, char sep, byte* bytes, int maxBytes, int base) 
 }
 
 bool loadSystemConfig() {
-  printSerial("mounting FS...");
+  Serial.println("mounting FS...");
   if (SPIFFS.begin()) {
-    printSerial("mounted file system");
+    Serial.println("mounted file system");
     if (SPIFFS.exists("/" + configJsonFile)) {
-      printSerial("reading config file");
+      Serial.println("reading config file");
       File configFile = SPIFFS.open("/" + configJsonFile, "r");
       if (configFile) {
-        printSerial("opened config file");
+        Serial.println("opened config file");
         size_t size = configFile.size();
         std::unique_ptr<char[]> buf(new char[size]);
         configFile.readBytes(buf.get(), size);
@@ -250,25 +291,28 @@ bool loadSystemConfig() {
         json.printTo(Serial);
         Serial.println("");
         if (json.success()) {
-          printSerial("\nparsed json");
+          Serial.println("\nparsed json");
           ((json["ip"]).as<String>()).toCharArray(ip, IPSIZE);
           ((json["netmask"]).as<String>()).toCharArray(netmask, IPSIZE);
           ((json["gw"]).as<String>()).toCharArray(gw, IPSIZE);
           ((json["ccuip"]).as<String>()).toCharArray(ccuip, IPSIZE);
-          ((json["variable"]).as<String>()).toCharArray(Variable, VARIABLESIZE);
+          ((json["variable1"]).as<String>()).toCharArray(Variable1, VARIABLESIZE);
+          ((json["variable2"]).as<String>()).toCharArray(Variable2, VARIABLESIZE);
+          ((json["variable3"]).as<String>()).toCharArray(Variable3, VARIABLESIZE);
+          ((json["variable4"]).as<String>()).toCharArray(Variable4, VARIABLESIZE);
           BackendType = json["backendtype"];
         } else {
-          printSerial("failed to load json config");
+          Serial.println("failed to load json config");
         }
       }
       return true;
     } else {
-      printSerial("/" + configJsonFile + " not found.");
+      Serial.println("/" + configJsonFile + " not found.");
       return false;
     }
     SPIFFS.end();
   } else {
-    printSerial("failed to mount FS");
+    Serial.println("failed to mount FS");
     return false;
   }
 }
