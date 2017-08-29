@@ -22,7 +22,7 @@ Modul
 ![Anschlussplan](Images/wire.png)
 ## Flashen
 Wenn alles nach obigem Bild verdrahtet wurde, kann das Image `WemosD1_HomeMatic_PIR.ino.d1_mini.bin` auf den Wemos geflasht werden.
-Die neueste Version ist bei den [Releases](https://github.com/jp112sdl/WemosD1_HomeMatic_PIR/releases/latest) zu finden
+Die neueste vorkompilierte Version ist bei den [Releases](https://github.com/jp112sdl/WemosD1_HomeMatic_PIR/releases/latest) zu finden
 
 #### Vorgehensweise:
 1. Voraussetzungen:
