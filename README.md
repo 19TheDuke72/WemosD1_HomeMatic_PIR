@@ -80,3 +80,13 @@ Die Eingabefelder, an denen kein PIR-Modul angeschlossen ist, sind leer zu lasse
 Die Haltezeit und sowie die Empfindlichkeit können an den beiden Potentiometern eingestellt werden.
 Eine Beschreibung lässt sich schnell bei Google finden, bzw. im [Datenblatt](https://www.mpja.com/download/31227sc.pdf) nachlesen.
 
+## PIR löst aus, obwohl keine Bewegung stattgefunden hat:
+Der HC SR 501 ist "bekannt" dafür, sogenannte "false postives" zu melden.
+
+Um dies einzudämmen, gibt es eine Modifikation:
+
+Man lötet einen 220nF Keramikkondensator zwischen Pin 12 und Pin 13 des BISS0001 ICs.
+
+Nachzulesen hier:
+
+https://www.letscontrolit.com/forum/viewtopic.php?t=671&start=20
